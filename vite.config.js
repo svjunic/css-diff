@@ -3,9 +3,10 @@ import fs from 'fs'
 import path from 'path'
 
 export default defineConfig({
+  root: 'src',
   base: './',
   build: {
-    outDir: 'docs',
+    outDir: '../docs',
   },
   test: {
     environment: 'node',
