@@ -1,5 +1,5 @@
 {
-  "name": "@sv.junic/css-diff",
+  "name": "@svjunic/css-diff",
   "version": "0.1.0",
   "description": "CSS structural diff tool — compares effective CSS properties between two files",
   "type": "module",

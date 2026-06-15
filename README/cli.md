@@ -3,7 +3,7 @@
 ## インストール
 
 ```bash
-npm install -g @sv.junic/css-diff
+npm install -g @svjunic/css-diff
 ```
 
 ## 使い方
@@ -37,7 +37,7 @@ css-diff old.css new.css --ignore-cosmetic
 ## ライブラリとして使う
 
 ```javascript
-import { diffCss } from "@sv.junic/css-diff";
+import { diffCss } from "@svjunic/css-diff";
 
 const result = diffCss(oldCssText, newCssText, { ignoreCosmetic: true });
 ```
