@@ -40,6 +40,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/svjunic/sv-css-diff"
+    "url": "git+https://github.com/svjunic/css-diff.git"
   }
 }
