@@ -24,6 +24,9 @@ coverage/
 # Playwright MCP
 .playwright-mcp/
 
+# CSS Diff Reports
+css-verify-report/
+
 # Claude Code
 CLAUDE.local.md
 .claude/worktrees
@@ -32,3 +35,4 @@ CLAUDE.local.md
 .claude/rules
 .claude/docs
 .claude/commands
+settings.local.json

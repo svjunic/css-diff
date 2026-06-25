@@ -1,17 +1,20 @@
 {
   "name": "@svjunic/css-diff",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CSS structural diff tool — compares effective CSS properties between two files",
   "type": "module",
   "bin": {
-    "css-diff": "bin/css-diff.js"
+    "css-diff": "bin/css-diff.cjs"
   },
   "exports": {
     ".": "./src/core/index.js"
   },
   "files": [
-    "bin/",
+    "bin/css-diff.cjs",
     "src/core/",
+    "src/ui/render.js",
+    "src/reporters/",
+    "src/styles.css",
     "README.md",
     "README/cli.md",
     "LICENSE"
@@ -19,12 +22,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/sync-skills.js",
     "test": "vitest run"
   },
   "dependencies": {
     "postcss": "^8.4.38"
   },
   "devDependencies": {
+    "esbuild": "^0.28.1",
     "fzf": "^0.5.2",
     "vite": "^8.0.16",
     "vitest": "^4.1.8"
