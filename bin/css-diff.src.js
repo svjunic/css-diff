@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (c) 2026 sv.junic. MIT License. v0.2.0
+// Source: https://github.com/svjunic/css-diff
 
 import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
@@ -54,8 +56,10 @@ try {
 const { values, positionals } = parsed
 
 if (values.version) {
-  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
-  console.log(pkg.version)
+  // __PKG_VERSION__ はビルド時に注入される。ソース直実行時は package.json から読む
+  // eslint-disable-next-line no-undef
+  const version = typeof __PKG_VERSION__ !== 'undefined' ? __PKG_VERSION__ : JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
+  console.log(version)
   process.exit(0)
 }
 

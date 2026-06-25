@@ -4,13 +4,13 @@
   "description": "CSS structural diff tool — compares effective CSS properties between two files",
   "type": "module",
   "bin": {
-    "css-diff": "bin/css-diff.js"
+    "css-diff": "bin/css-diff.cjs"
   },
   "exports": {
     ".": "./src/core/index.js"
   },
   "files": [
-    "bin/",
+    "bin/css-diff.cjs",
     "src/core/",
     "src/ui/render.js",
     "src/reporters/",
