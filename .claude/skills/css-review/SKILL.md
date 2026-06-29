@@ -13,11 +13,19 @@ allowed-tools:
 ## 前提条件
 
 - Node.js 18.3.0 以上
-- スキルディレクトリで `npm ci` を実行済みであること（初回セットアップ）
+- postcss が以下いずれかの方法でインストール済みであること（初回のみ）
+
+**方法A: グローバルインストール**（環境に1回だけ実行）
 
 ```bash
-cd <SKILL_DIR> && npm install
+npm install -g postcss
 ```
+
+この場合、スクリプト実行時に `NODE_PATH=$(npm root -g)` を先頭に付ける（Step 2 参照）。
+
+**方法B: プロジェクトにインストール済み**
+
+検証対象プロジェクトの `node_modules/postcss` が存在する場合は追加作業不要。Node.js の通常のモジュール解決でプロジェクトの postcss が使われる。
 
 > `<SKILL_DIR>` = このスキルが読み込まれた際に表示される `Base directory for this skill:` のパス。以降の手順でも同様に使用すること。
 
@@ -38,6 +46,9 @@ git diff --name-only HEAD -- '*.css'
 
 ### Step 2: HTMLレポートを生成し、意味的差分を取得する
 
+> **postcss 解決について:** 以下のコマンドは `NODE_PATH=$(npm root -g)` を付けてグローバル postcss を参照する。
+> プロジェクトに postcss がインストールされている場合（方法B）、プロジェクトの node_modules が優先されるため NODE_PATH は無視される。どちらの方法でも同じコマンドが使える。
+
 #### Step 2a: 各ファイルのHTMLレポートを生成する
 
 変更された各ファイルを個別に比較し、HTMLレポートを `css-review-report/` に出力する。
@@ -49,7 +60,7 @@ mkdir -p css-review-report
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
   git show HEAD:${filepath} > /tmp/css-review-old-one.css 2>/dev/null || > /tmp/css-review-old-one.css
   OUTPUT_HTML="css-review-report/$(echo "$filepath" | sed 's|/|--|g').html"
-  node <SKILL_DIR>/bin/css-review.src.js \
+  NODE_PATH=$(npm root -g) node <SKILL_DIR>/bin/css-review.src.js \
     /tmp/css-review-old-one.css ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
@@ -70,7 +81,7 @@ for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
     OUT="$WORK_DIR/out-${SLUG}.txt"
     git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
     echo "=== $filepath ===" > "$OUT"
-    node <SKILL_DIR>/bin/css-review.src.js "$OLD" "${filepath}" \
+    NODE_PATH=$(npm root -g) node <SKILL_DIR>/bin/css-review.src.js "$OLD" "${filepath}" \
       --format json --order-risk --filter all >> "$OUT" 2>&1
     echo $? > "$WORK_DIR/exit-${SLUG}.code"
   ) &
@@ -154,6 +165,6 @@ HTMLレポートで詳細を確認してください:
 
 | エラー                    | 原因                          | 対処                                                            |
 | ------------------------- | ----------------------------- | --------------------------------------------------------------- |
-| `Cannot find module`      | `npm ci` 未実行               | `cd <SKILL_DIR> && npm ci` を実行                              |
+| `Cannot find module`      | postcss 未インストール        | `npm install -g postcss` を実行                                |
 | `Exit code 2`             | CSSパースエラー               | ファイルの構文エラーを確認                                      |
 | git showがエラー          | 新規追加ファイル              | 空ファイルを旧バージョンとして使用（Step 2参照）               |
