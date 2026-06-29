@@ -1,5 +1,5 @@
 {
-  "name": "@svjunic/css-diff",
+  "name": "@svjunic/css-review",
   "version": "0.2.0",
   "description": "CSS structural diff tool — compares effective CSS properties between two files",
   "type": "module",
@@ -45,6 +45,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/svjunic/css-diff.git"
+    "url": "git+https://github.com/svjunic/css-review.git"
   }
 }
