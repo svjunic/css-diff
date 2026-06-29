@@ -8,7 +8,7 @@ allowed-tools:
 
 # CSS 差分検証スキル（スクリプト版）
 
-プロジェクト内の `bin/css-diff.js` を使い、CSSカスケードルールを踏まえた意味的差分で変更を検証するスキル。テキスト差分ではなく「最終的に有効なプロパティ値」レベルで比較するため、後勝ちルールや `!important` の影響も正確に把握できる。
+プロジェクト内の `bin/css-review.src.js` を使い、CSSカスケードルールを踏まえた意味的差分で変更を検証するスキル。テキスト差分ではなく「最終的に有効なプロパティ値」レベルで比較するため、後勝ちルールや `!important` の影響も正確に把握できる。
 
 ## 前提条件
 
@@ -60,7 +60,7 @@ mkdir -p css-review-report
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
   git show HEAD:${filepath} > /tmp/css-review-old-one.css 2>/dev/null || > /tmp/css-review-old-one.css
   OUTPUT_HTML="css-review-report/$(echo "$filepath" | sed 's|/|--|g').html"
-  node <SKILL_DIR>/bin/css-diff.src.js \
+  node <SKILL_DIR>/bin/css-review.src.js \
     /tmp/css-review-old-one.css ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
@@ -81,7 +81,7 @@ for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
     OUT="$WORK_DIR/out-${SLUG}.txt"
     git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
     echo "=== $filepath ===" > "$OUT"
-    node <SKILL_DIR>/bin/css-diff.src.js "$OLD" "${filepath}" \
+    node <SKILL_DIR>/bin/css-review.src.js "$OLD" "${filepath}" \
       --format json --order-risk --filter all >> "$OUT" 2>&1
     echo $? > "$WORK_DIR/exit-${SLUG}.code"
   ) &
@@ -167,5 +167,5 @@ HTMLレポートで詳細を確認してください:
 | ------------------------- | ----------------------------- | --------------------------------------------------------------- |
 | Step 0 で `NG`            | postcss が未インストール      | `npm install -g postcss` を案内して**停止**。回避策は取らない  |
 | `Exit code 2`             | CSSパースエラー               | ファイルの構文エラーを確認                                      |
-| `Cannot find module`      | bin/css-diff.jsが見つからない | `npm ci` をスキルディレクトリで実行したか確認                  |
+| `Cannot find module`      | bin/css-review.src.jsが見つからない | `npm ci` をスキルディレクトリで実行したか確認                  |
 | git showがエラー          | 新規追加ファイル              | 空ファイルを旧バージョンとして使用（Step 2参照）               |

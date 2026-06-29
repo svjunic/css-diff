@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { describe, it, expect } from 'vitest'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
-const CLI = resolve(__dirname, '../bin/css-diff.js')
+const CLI = resolve(__dirname, '../bin/css-review.cjs')
 const OLD = resolve(__dirname, '../data/old/module.css')
 const NEW = resolve(__dirname, '../data/new/module.css')
 
@@ -17,7 +17,7 @@ function run(args) {
   }
 }
 
-describe('css-diff CLI', () => {
+describe('css-review CLI', () => {
   it('--help exits 0 and shows Usage', () => {
     const { stdout, code } = run(['--help'])
     expect(code).toBe(0)

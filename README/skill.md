@@ -1,13 +1,13 @@
 # Claude Code スキル
 
-css-diff を Claude Code から呼び出すスキルです。CSS/SCSS/SASS ファイルを編集した後、意図しない副作用がないかを自動的に検証します。
+css-review を Claude Code から呼び出すスキルです。CSS/SCSS/SASS ファイルを編集した後、意図しない副作用がないかを自動的に検証します。
 
 ## スキルの種類
 
 | スキル | 用途 | 実行バイナリ |
 |---|---|---|
-| `css-review` | 社内・開発環境向け | プロジェクト内の `bin/css-diff.src.js` を直接実行 |
-| `css-review-npm` | 公開・汎用向け | npm パッケージ `@svjunic/css-diff` を使用 |
+| `css-review` | 社内・開発環境向け | プロジェクト内の `bin/css-review.src.js` を直接実行 |
+| `css-review-npm` | 公開・汎用向け | npm パッケージ `@svjunic/css-review` を使用 |
 
 どちらも同じ検証ロジックを実行します。状況に応じて使い分けてください。
 

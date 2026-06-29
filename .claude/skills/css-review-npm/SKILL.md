@@ -1,6 +1,6 @@
 ---
 name: css-review-npm
-description: SASSやCSSを修正した後に最終的なスタイル変更が想定通りか検証するスキル。「CSS確認して」「スタイル変更を検証して」「/css-review」「css変更を確認」「CSSの差分を見せて」などのフレーズが出た時に使用。@svjunic/css-diffをnpm経由で取得してCSSの意味的差分を確認する（公開・汎用向け）。
+description: SASSやCSSを修正した後に最終的なスタイル変更が想定通りか検証するスキル。「CSS確認して」「スタイル変更を検証して」「/css-review」「css変更を確認」「CSSの差分を見せて」などのフレーズが出た時に使用。@svjunic/css-reviewをnpm経由で取得してCSSの意味的差分を確認する（公開・汎用向け）。
 allowed-tools:
   - Bash
   - Read
@@ -8,7 +8,7 @@ allowed-tools:
 
 # CSS 差分検証スキル（npm版）
 
-`@svjunic/css-diff` を使い、CSSカスケードルールを踏まえた意味的差分で変更を検証するスキル。テキスト差分ではなく「最終的に有効なプロパティ値」レベルで比較するため、後勝ちルールや `!important` の影響も正確に把握できる。
+`@svjunic/css-review` を使い、CSSカスケードルールを踏まえた意味的差分で変更を検証するスキル。テキスト差分ではなく「最終的に有効なプロパティ値」レベルで比較するため、後勝ちルールや `!important` の影響も正確に把握できる。
 
 ## 前提条件
 
@@ -47,7 +47,7 @@ mkdir -p css-review-report
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
   git show HEAD:${filepath} > /tmp/css-review-old-one.css 2>/dev/null || > /tmp/css-review-old-one.css
   OUTPUT_HTML="css-review-report/$(echo "$filepath" | sed 's|/|--|g').html"
-  node <SKILL_DIR>/node_modules/.bin/css-diff \
+  node <SKILL_DIR>/node_modules/.bin/css-review \
     /tmp/css-review-old-one.css ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
@@ -68,7 +68,7 @@ for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
     OUT="$WORK_DIR/out-${SLUG}.txt"
     git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
     echo "=== $filepath ===" > "$OUT"
-    node <SKILL_DIR>/node_modules/.bin/css-diff "$OLD" "${filepath}" \
+    node <SKILL_DIR>/node_modules/.bin/css-review "$OLD" "${filepath}" \
       --format json --order-risk --filter all >> "$OUT" 2>&1
     echo $? > "$WORK_DIR/exit-${SLUG}.code"
   ) &
@@ -194,5 +194,5 @@ cd .claude/skills/css-review-npm && npm ci
 | エラー                               | 原因                     | 対処                                             |
 | ------------------------------------ | ------------------------ | ------------------------------------------------ |
 | `Exit code 2`                        | CSSパースエラー          | ファイルの構文エラーを確認                       |
-| `@svjunic/css-diff が見つかりません` | パッケージ未インストール | `npm install @svjunic/css-diff` を実行           |
+| `@svjunic/css-review が見つかりません` | パッケージ未インストール | `npm install @svjunic/css-review` を実行           |
 | git showがエラー                     | 新規追加ファイル         | 空ファイルを旧バージョンとして使用（Step 2参照） |

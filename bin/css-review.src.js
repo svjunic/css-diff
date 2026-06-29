@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Copyright (c) 2026 sv.junic. MIT License. v0.2.0
-// Source: https://github.com/svjunic/css-diff
+// Source: https://github.com/svjunic/css-review
 
 import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
@@ -10,7 +10,7 @@ import { diff } from '../src/core/diff.js'
 import { computeOrderRisks } from '../src/core/order-risk.js'
 import { generateHtmlReport } from '../src/reporters/html.js'
 
-const HELP = `Usage: css-diff <old.css> <new.css> [options]
+const HELP = `Usage: css-review <old.css> <new.css> [options]
 
 Arguments:
   old.css    比較元 CSS ファイルのパス
