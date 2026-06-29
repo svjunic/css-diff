@@ -13,6 +13,8 @@ allowed-tools:
 ## 前提条件
 
 - Node.js 18.3.0 以上
+- `postcss` がプロジェクトの `node_modules` に存在すること（SASS / PostCSS を使うプロジェクトでは通常満たされる）
+  - ない場合: `npm install -D postcss` でプロジェクトに追加するか、`npm install -g postcss` でグローバルインストール
 
 > `<SKILL_DIR>` = このスキルが読み込まれた際に表示される `Base directory for this skill:` のパス。以降の手順でも同様に使用すること。
 
@@ -42,7 +44,7 @@ mkdir -p css-verify-report
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
   git show HEAD:${filepath} > /tmp/css-verify-old-one.css 2>/dev/null || > /tmp/css-verify-old-one.css
   OUTPUT_HTML="css-verify-report/$(echo "$filepath" | sed 's|/|--|g').html"
-  node <SKILL_DIR>/bin/css-diff.cjs \
+  node <SKILL_DIR>/bin/css-diff.src.js \
     /tmp/css-verify-old-one.css ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
@@ -63,7 +65,7 @@ for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
     OUT="$WORK_DIR/out-${SLUG}.txt"
     git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
     echo "=== $filepath ===" > "$OUT"
-    node <SKILL_DIR>/bin/css-diff.cjs "$OLD" "${filepath}" \
+    node <SKILL_DIR>/bin/css-diff.src.js "$OLD" "${filepath}" \
       --format json --order-risk --filter all >> "$OUT" 2>&1
     echo $? > "$WORK_DIR/exit-${SLUG}.code"
   ) &

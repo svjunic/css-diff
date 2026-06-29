@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * ビルド後に css-diff CLI を css-verify スキルへバンドルして同期する。
+ * ビルド後に css-diff CLI をビルドし、スキルへ同期する。
  * package.json の postbuild から呼ばれる。
  *
  * 生成物:
  *   bin/css-diff.cjs                              — minified CJS CLI (bin/css-diff.src.js から生成)
- *   .claude/skills/css-verify/bin/css-diff.cjs   — minified CJS バンドル (スキル向け)
+ *   .claude/skills/css-verify/                   — ESM ソースファイル一式 (ビルド成果物なし)
  *   .claude/skills/css-verify-npm/hooks/posttooluse.js — minified hook スクリプト
  */
 import { buildSync } from "esbuild";
-import { mkdirSync, readFileSync } from "fs";
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -38,23 +38,19 @@ buildSync({
 });
 console.log("✓ minified bin/css-diff.cjs");
 
-// ── 2. css-verify スキル向け CJS バンドル (minified) ─────────────────────────
-const CJS_OUT = join(ROOT, ".claude/skills/css-verify/bin/css-diff.cjs");
-mkdirSync(dirname(CJS_OUT), { recursive: true });
+// ── 2. css-verify スキル向け ESM ソースファイルをコピー ──────────────────────
+const SKILL_DIR = join(ROOT, ".claude/skills/css-verify");
+mkdirSync(join(SKILL_DIR, "bin"), { recursive: true });
+mkdirSync(join(SKILL_DIR, "src/reporters"), { recursive: true });
+mkdirSync(join(SKILL_DIR, "src/ui"), { recursive: true });
 
-buildSync({
-  entryPoints: [join(ROOT, "bin/css-diff.src.js")],
-  bundle: true,
-  platform: "node",
-  format: "cjs",
-  minify: true,
-  outfile: CJS_OUT,
-  target: "node18",
-  banner: { js: COPYRIGHT },
-  define: defines,
-  logLevel: "error",
-});
-console.log("✓ minified .claude/skills/css-verify/bin/css-diff.cjs");
+cpSync(join(ROOT, "bin/css-diff.src.js"), join(SKILL_DIR, "bin/css-diff.src.js"), { force: true });
+cpSync(join(ROOT, "src/core"), join(SKILL_DIR, "src/core"), { recursive: true, force: true });
+cpSync(join(ROOT, "src/reporters/html.js"), join(SKILL_DIR, "src/reporters/html.js"), { force: true });
+cpSync(join(ROOT, "src/ui/render.js"), join(SKILL_DIR, "src/ui/render.js"), { force: true });
+cpSync(join(ROOT, "src/styles.css"), join(SKILL_DIR, "src/styles.css"), { force: true });
+writeFileSync(join(SKILL_DIR, "package.json"), JSON.stringify({ type: "module" }, null, 2) + "\n");
+console.log("✓ copied ESM sources to .claude/skills/css-verify/");
 
 // ── 3. css-verify-npm スキルの hook スクリプト (minified) ─────────────────────
 const HOOK_OUT = join(ROOT, ".claude/skills/css-verify-npm/hooks/posttooluse.js");
