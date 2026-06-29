@@ -9,7 +9,7 @@
  *   .claude/skills/css-review-npm/hooks/posttooluse.js — minified hook スクリプト
  */
 import { buildSync } from "esbuild";
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -52,23 +52,3 @@ cpSync(join(ROOT, "src/styles.css"), join(SKILL_DIR, "src/styles.css"), { force:
 writeFileSync(join(SKILL_DIR, "package.json"), JSON.stringify({ type: "module" }, null, 2) + "\n");
 console.log("✓ copied ESM sources to .claude/skills/css-review/");
 
-// ── 3. css-review-npm スキルの hook スクリプト (minified) ─────────────────────
-const HOOK_SRC = join(ROOT, ".claude/skills/css-review-npm/hooks/posttooluse.src.js");
-const HOOK_OUT = join(ROOT, ".claude/skills/css-review-npm/hooks/posttooluse.js");
-
-if (existsSync(HOOK_SRC)) {
-  buildSync({
-    entryPoints: [HOOK_SRC],
-    bundle: false,
-    platform: "node",
-    format: "esm",
-    minify: true,
-    outfile: HOOK_OUT,
-    target: "node18",
-    banner: { js: COPYRIGHT },
-    logLevel: "error",
-  });
-  console.log("✓ minified .claude/skills/css-review-npm/hooks/posttooluse.js");
-} else {
-  console.log("⚠ skipped css-review-npm hook (posttooluse.src.js not found)");
-}
