@@ -8,12 +8,10 @@
  *   c = 要素名 (div)、擬似要素 (::before) の数
  */
 
-/**
- * セレクタの詳細度を [a, b, c] タプルで返す。
- * ネストした :not() 等の内側の詳細度は簡略化して扱う。
- * @param {string} selector
- * @returns {[number, number, number]}
- */
+function isHigherSpec([a1, b1, c1], [a2, b2, c2]) {
+  return a1 > a2 || (a1 === a2 && b1 > b2) || (a1 === a2 && b1 === b2 && c1 > c2)
+}
+
 function splitTopLevelCommas(str) {
   const parts = []
   let depth = 0, start = 0
@@ -30,6 +28,12 @@ function splitTopLevelCommas(str) {
   return parts
 }
 
+/**
+ * セレクタの詳細度を [a, b, c] タプルで返す。
+ * ネストした :not() 等の内側の詳細度は簡略化して扱う。
+ * @param {string} selector
+ * @returns {[number, number, number]}
+ */
 export function computeSpecificity(selector) {
   let s = selector
   let a = 0, b = 0, c = 0
@@ -43,7 +47,7 @@ export function computeSpecificity(selector) {
   // :not()・:is()・:has()・:matches() は引数の最大詳細度を引き継ぐ（CSS Selectors Level 4）
   // :where() は常に詳細度 0。括弧の深さを手動追跡して任意の深さのネストに対応する
   {
-    const PSEUDO_RE = /:(?:not|is|has|matches|where)\s*\(/gi
+    const PSEUDO_RE = /:(?<name>not|is|has|matches|where)\s*\(/gi
     let kept = ''
     let pos = 0
     let m
@@ -63,18 +67,15 @@ export function computeSpecificity(selector) {
       kept += s.slice(pos, m.index)
       pos = i
       PSEUDO_RE.lastIndex = pos
-      const pseudoName = m[0].replace(/^:(\w+).*/, '$1').toLowerCase()
-      if (pseudoName !== 'where') {
+      if (m.groups.name.toLowerCase() !== 'where') {
         const inner = s.slice(innerStart, i - 1).trim()
         const args = splitTopLevelCommas(inner)
-        let maxA = 0, maxB = 0, maxC = 0
+        let maxSpec = [0, 0, 0]
         for (const arg of args) {
-          const [ia, ib, ic] = computeSpecificity(arg)
-          if (ia > maxA || (ia === maxA && ib > maxB) || (ia === maxA && ib === maxB && ic > maxC)) {
-            maxA = ia; maxB = ib; maxC = ic
-          }
+          const spec = computeSpecificity(arg)
+          if (isHigherSpec(spec, maxSpec)) maxSpec = spec
         }
-        a += maxA; b += maxB; c += maxC
+        a += maxSpec[0]; b += maxSpec[1]; c += maxSpec[2]
       }
     }
     s = kept + s.slice(pos)

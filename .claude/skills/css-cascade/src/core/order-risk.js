@@ -36,7 +36,8 @@ function buildOrderRows(oldList, newList) {
     const pairedNew = pairing.get(oldSel)
 
     // pairedNew より前に来る new 専用セレクタを added 行として挿入
-    while (ni < newList.length && newList[ni] !== pairedNew && !oldSet.has(newList[ni])) {
+    // pairedNew ∈ oldSet のため !oldSet.has() が false になった時点で必ず pairedNew を指す
+    while (ni < newList.length && !oldSet.has(newList[ni])) {
       rows.push({ type: 'added', oldSelector: null, newSelector: newList[ni] })
       ni++
     }
