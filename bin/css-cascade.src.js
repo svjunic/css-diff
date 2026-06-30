@@ -211,7 +211,7 @@ if (values.format === 'json') {
   if (summary.changed) parts.push(`${c.yellow}${summary.changed} changed${c.reset}`)
   if (summary.added)   parts.push(`${c.green}${summary.added} added${c.reset}`)
   if (summary.removed) parts.push(`${c.red}${summary.removed} removed${c.reset}`)
-  if (filter === 'all' && summary.unchanged) parts.push(`${summary.unchanged} unchanged`)
+  if ((filter === 'all' || filter === 'unchanged') && summary.unchanged) parts.push(`${summary.unchanged} unchanged`)
   console.log(`\nSummary: ${parts.length ? parts.join(', ') : 'no differences'}`)
 
   if (values['order-risk'] && orderRisks.length > 0) {

@@ -24,7 +24,14 @@ export function computeSpecificity(selector) {
   // 属性セレクタ [...] を除去してカウント
   s = s.replace(/\[[^\]]*\]/g, () => { b++; return '' })
 
-  // 擬似クラス :xxx を除去してカウント（:not(...) 等の関数形式も含む）
+  // :not() は引数の詳細度を引き継ぐ（CSS Selectors Level 3/4）。:not() 自体は b++ しない
+  s = s.replace(/:not\(\s*([^)]*?)\s*\)/gi, (_, inner) => {
+    inner.replace(/#[\w-]+/g, () => { a++; return '' })
+    inner.replace(/\.[\w-]+|\[[^\]]*\]/g, () => { b++; return '' })
+    return ''
+  })
+
+  // 擬似クラス :xxx を除去してカウント（関数形式も含む）
   s = s.replace(/:[^:\s>+~([\].#]+(\([^)]*\))?/g, () => { b++; return '' })
 
   // ID セレクタ #xxx を除去してカウント

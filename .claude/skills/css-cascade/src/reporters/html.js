@@ -6,7 +6,12 @@ import { renderDiff, renderOrderRisks } from '../ui/render.js'
 // In ESM context (npm package), falls back to readFileSync
 function getCss() {
   if (typeof __BUNDLED_CSS__ !== 'undefined') return __BUNDLED_CSS__
-  return readFileSync(fileURLToPath(new URL('../styles.css', import.meta.url)), 'utf8')
+  try {
+    return readFileSync(fileURLToPath(new URL('../styles.css', import.meta.url)), 'utf8')
+  } catch (err) {
+    process.stderr.write(`Error: styles.css を読み込めません: ${err.message}\n`)
+    process.exit(2)
+  }
 }
 
 const REPORT_STYLE = `
@@ -72,7 +77,7 @@ export function generateHtmlReport(diffResult, orderRisks) {
   }
 
   const hasPropertyChanges = filteredItems.length > 0
-  const hasOrderRisks = orderRisks && orderRisks.some(r => r.hasWarning)
+  const hasOrderRisks = orderRisks && orderRisks.length > 0
 
   // 静的レポートではすべての順序リストコンテキストを展開済みにする
   const expandedContexts = orderRisks ? new Set(orderRisks.map(r => r.contextKey)) : new Set()

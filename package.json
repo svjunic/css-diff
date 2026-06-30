@@ -1,6 +1,6 @@
 {
   "name": "@svjunic/css-cascade",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CSS diff tool that compares effective property values by applying cascade rules, not raw text",
   "keywords": [
     "css",

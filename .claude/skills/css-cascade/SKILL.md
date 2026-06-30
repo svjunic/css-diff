@@ -52,15 +52,20 @@ git diff --name-only HEAD -- '*.css'
 
 ```bash
 mkdir -p css-cascade-report
+WORK_DIR=$(mktemp -d)
 
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
-  git show HEAD:${filepath} > /tmp/css-cascade-old-one.css 2>/dev/null || > /tmp/css-cascade-old-one.css
+  SLUG=$(echo "$filepath" | tr '/' '-')
+  OLD="$WORK_DIR/old-${SLUG}.css"
+  git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
   OUTPUT_HTML="css-cascade-report/$(echo "$filepath" | sed 's|/|--|g').html"
   node <SKILL_DIR>/bin/css-cascade.src.js \
-    /tmp/css-cascade-old-one.css ${filepath} \
+    "$OLD" ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
 done
+
+rm -rf "$WORK_DIR"
 ```
 
 #### Step 3b: 各ファイルを並列で比較してClaudeが読むための意味的差分を取得する
