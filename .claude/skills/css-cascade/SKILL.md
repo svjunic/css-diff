@@ -1,14 +1,14 @@
 ---
-name: css-review
-description: SASSやCSSを修正した後に最終的なスタイル変更が想定通りか検証するスキル。「CSS確認して」「スタイル変更を検証して」「/css-review」「css変更を確認」「CSSの差分を見せて」などのフレーズが出た時に使用。プロジェクト内のスクリプトを使ってCSSの意味的差分を確認する（社内・開発環境向け）。
+name: css-cascade
+description: テストが書けない大規模CSSにおいて、変更によるカスケードリスク（セレクタの競合・順序変更による意図しない上書き）を検出するスキル。「/css-cascade」「CSSのカスケードリスクを確認して」「CSSの変更影響を確認して」「CSS変更でカスケードが壊れていないか確認して」などのフレーズが出た時に使用。プロジェクト内のスクリプトを使ってCSSの意味的差分を確認する（社内・開発環境向け）。
 allowed-tools:
   - Bash
   - Read
 ---
 
-# CSS 差分検証スキル（スクリプト版）
+# CSS カスケードリスク確認スキル（スクリプト版）
 
-プロジェクト内の `bin/css-review.src.js` を使い、CSSカスケードルールを踏まえた意味的差分で変更を検証するスキル。テキスト差分ではなく「最終的に有効なプロパティ値」レベルで比較するため、後勝ちルールや `!important` の影響も正確に把握できる。
+プロジェクト内の `bin/css-cascade.src.js` を使い、CSSカスケードルールを踏まえた意味的差分で変更を検証するスキル。テキスト差分ではなく「最終的に有効なプロパティ値」レベルで比較するため、後勝ちルールや `!important` の影響も正確に把握できる。
 
 ## 前提条件
 
@@ -47,17 +47,17 @@ git diff --name-only HEAD -- '*.css'
 
 #### Step 3a: 各ファイルのHTMLレポートを生成する
 
-変更された各ファイルを個別に比較し、HTMLレポートを `css-review-report/` に出力する。
+変更された各ファイルを個別に比較し、HTMLレポートを `css-cascade-report/` に出力する。
 セレクタ順序の変更も検出するため `--order-risk` を常に付与する。
 
 ```bash
-mkdir -p css-review-report
+mkdir -p css-cascade-report
 
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
-  git show HEAD:${filepath} > /tmp/css-review-old-one.css 2>/dev/null || > /tmp/css-review-old-one.css
-  OUTPUT_HTML="css-review-report/$(echo "$filepath" | sed 's|/|--|g').html"
-  node <SKILL_DIR>/bin/css-review.src.js \
-    /tmp/css-review-old-one.css ${filepath} \
+  git show HEAD:${filepath} > /tmp/css-cascade-old-one.css 2>/dev/null || > /tmp/css-cascade-old-one.css
+  OUTPUT_HTML="css-cascade-report/$(echo "$filepath" | sed 's|/|--|g').html"
+  node <SKILL_DIR>/bin/css-cascade.src.js \
+    /tmp/css-cascade-old-one.css ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
 done
@@ -77,7 +77,7 @@ for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
     OUT="$WORK_DIR/out-${SLUG}.txt"
     git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
     echo "=== $filepath ===" > "$OUT"
-    node <SKILL_DIR>/bin/css-review.src.js "$OLD" "${filepath}" \
+    node <SKILL_DIR>/bin/css-cascade.src.js "$OLD" "${filepath}" \
       --format json --order-risk --filter all >> "$OUT" 2>&1
     echo $? > "$WORK_DIR/exit-${SLUG}.code"
   ) &
@@ -127,7 +127,7 @@ JSON の `orderRisks` フィールドを確認する。`hasWarning: true` のエ
 セレクタの並び順が変更されています。想定通りの変更か確認してください。
 
 HTMLレポートで詳細を確認してください:
-→ css-review-report/docs--common.css.html
+→ css-cascade-report/docs--common.css.html
 ```
 
 **エージェントとしての判断：**
