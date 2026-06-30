@@ -55,7 +55,11 @@ export function computeSpecificity(selector) {
         else if (s[i] === ')') depth--
         i++
       }
-      if (depth !== 0) break  // 括弧が閉じていない場合は処理を中断
+      if (depth !== 0) {
+        kept += s.slice(pos, m.index)  // 不正なpseudo以前のテキストは保持
+        pos = s.length                  // 不正なpseudoとそれ以降は破棄
+        break
+      }
       kept += s.slice(pos, m.index)
       pos = i
       PSEUDO_RE.lastIndex = pos

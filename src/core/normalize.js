@@ -89,7 +89,7 @@ export function canonicalizeValue(value) {
   v = v.replace(/\s*,\s*/g, ',')
   // 先頭ゼロ補完: 数値の前に空白・カンマ・括弧がある場合、または行頭（負符号も考慮）
   // ※ */空白除去より先に実行することで calc(1 * -.2em) の "-" 前のスペースを利用できる
-  v = v.replace(/(^|[\s,(])(-?)\.(\d)/g, (_, pre, sign, digit) => `${pre}${sign}0.${digit}`)
+  v = v.replace(/(^|[\s,(*\/])(-?)\.(\d)/g, (_, pre, sign, digit) => `${pre}${sign}0.${digit}`)
   // * / 周辺の空白を除去
   v = v.replace(/\s*([*/])\s*/g, '$1')
   // 16進カラー正規化
