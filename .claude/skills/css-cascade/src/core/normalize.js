@@ -76,9 +76,10 @@ function normalizeHex(hex) {
  * 正規化の内容:
  * 1. 前後の空白をトリム、連続空白を1スペースに
  * 2. クォートを除去 ('a' → a, "a" → a)
- * 3. * / 周辺の空白を除去 (a * b → a*b)  ※ + - は calc の意味が変わるため触れない
- * 4. 先頭ゼロを補完 (.2em → 0.2em)
- * 5. 16進カラーを正規化 (#FFF → #ffffff)
+ * 3. カンマ周辺の空白を除去
+ * 4. 先頭ゼロを補完 (.2em → 0.2em) — * / 空白除去より先に行い calc(1 * -.2em) を正しく処理
+ * 5. * / 周辺の空白を除去 (a * b → a*b)  ※ + - は calc の意味が変わるため触れない
+ * 6. 16進カラーを正規化 (#FFF → #ffffff)
  */
 export function canonicalizeValue(value) {
   let v = value.trim().replace(/\s+/g, ' ')
@@ -86,10 +87,11 @@ export function canonicalizeValue(value) {
   v = v.replace(/['"]/g, '')
   // カンマ周辺の空白を除去 (a, b → a,b)  ※多値プロパティ・font-family・transition等の表記揺れ吸収
   v = v.replace(/\s*,\s*/g, ',')
+  // 先頭ゼロ補完: 数値の前に空白・カンマ・括弧がある場合、または行頭（負符号も考慮）
+  // ※ */空白除去より先に実行することで calc(1 * -.2em) の "-" 前のスペースを利用できる
+  v = v.replace(/(^|[\s,(])(-?)\.(\d)/g, (_, pre, sign, digit) => `${pre}${sign}0.${digit}`)
   // * / 周辺の空白を除去
   v = v.replace(/\s*([*/])\s*/g, '$1')
-  // 先頭ゼロ補完: 数値の前に空白・カンマ・括弧がある場合、または行頭（負符号も考慮）
-  v = v.replace(/(^|[\s,(])(-?)\.(\d)/g, (_, pre, sign, digit) => `${pre}${sign}0.${digit}`)
   // 16進カラー正規化
   v = v.replace(/#[0-9a-fA-F]{3,8}\b/g, m => normalizeHex(m))
   return v

@@ -40,22 +40,41 @@ export function computeSpecificity(selector) {
   // 属性セレクタ [...] を除去してカウント
   s = s.replace(/\[[^\]]*\]/g, () => { b++; return '' })
 
-  // :not() は引数の詳細度を引き継ぐ（CSS Selectors Level 3/4）。:not() 自体は b++ しない
-  // CSS Selectors Level 4: カンマ区切りの引数リストは最大詳細度を採用する
-  // ネストした括弧 (:not(:nth-child(2n)) 等) に対応するため (?:[^()]*|\([^)]*\))* を使う
-  s = s.replace(/:not\(\s*((?:[^()]*|\([^)]*\))*)\s*\)/gi, (_, inner) => {
-    // トップレベルのカンマのみで分割（括弧内のカンマは無視）
-    const args = splitTopLevelCommas(inner)
-    let maxA = 0, maxB = 0, maxC = 0
-    for (const arg of args) {
-      const [ia, ib, ic] = computeSpecificity(arg)
-      if (ia > maxA || (ia === maxA && ib > maxB) || (ia === maxA && ib === maxB && ic > maxC)) {
-        maxA = ia; maxB = ib; maxC = ic
+  // :not()・:is()・:has()・:matches() は引数の最大詳細度を引き継ぐ（CSS Selectors Level 4）
+  // :where() は常に詳細度 0。括弧の深さを手動追跡して任意の深さのネストに対応する
+  {
+    const PSEUDO_RE = /:(?:not|is|has|matches|where)\s*\(/gi
+    let kept = ''
+    let pos = 0
+    let m
+    while ((m = PSEUDO_RE.exec(s)) !== null) {
+      const innerStart = m.index + m[0].length
+      let depth = 1, i = innerStart
+      while (i < s.length && depth > 0) {
+        if (s[i] === '(') depth++
+        else if (s[i] === ')') depth--
+        i++
+      }
+      if (depth !== 0) break  // 括弧が閉じていない場合は処理を中断
+      kept += s.slice(pos, m.index)
+      pos = i
+      PSEUDO_RE.lastIndex = pos
+      const pseudoName = m[0].replace(/^:(\w+).*/, '$1').toLowerCase()
+      if (pseudoName !== 'where') {
+        const inner = s.slice(innerStart, i - 1).trim()
+        const args = splitTopLevelCommas(inner)
+        let maxA = 0, maxB = 0, maxC = 0
+        for (const arg of args) {
+          const [ia, ib, ic] = computeSpecificity(arg)
+          if (ia > maxA || (ia === maxA && ib > maxB) || (ia === maxA && ib === maxB && ic > maxC)) {
+            maxA = ia; maxB = ib; maxC = ic
+          }
+        }
+        a += maxA; b += maxB; c += maxC
       }
     }
-    a += maxA; b += maxB; c += maxC
-    return ''
-  })
+    s = kept + s.slice(pos)
+  }
 
   // 擬似クラス :xxx を除去してカウント（関数形式も含む）
   s = s.replace(/:[^:\s>+~([\].#]+(\([^)]*\))?/g, () => { b++; return '' })
