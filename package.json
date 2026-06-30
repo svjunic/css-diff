@@ -1,7 +1,7 @@
 {
   "name": "@svjunic/css-cascade",
-  "version": "0.2.0",
-  "description": "CSS structural diff tool — compares effective CSS properties between two files",
+  "version": "1.0.0",
+  "description": "CSS diff tool that compares effective property values by applying cascade rules, not raw text",
   "type": "module",
   "bin": {
     "css-cascade": "bin/css-cascade.cjs"
