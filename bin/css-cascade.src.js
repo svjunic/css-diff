@@ -28,8 +28,8 @@ Options:
   -h, --help                              ヘルプを表示
 
 Exit codes:
-  0  差分なし
-  1  差分あり
+  0  差分なし・順序変更なし
+  1  差分あり、または --order-risk 指定時に順序変更あり（プロパティ差分ゼロでも exit 1）
   2  エラー`
 
 let parsed
