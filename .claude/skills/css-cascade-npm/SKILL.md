@@ -13,17 +13,24 @@ allowed-tools:
 ## 前提条件
 
 - Node.js 18.3.0 以上
-- スキルディレクトリで `npm ci` を実行済みであること（初回セットアップ）
-
-```bash
-cd <SKILL_DIR> && npm ci
-```
+- @svjunic/css-cascade は初回実行時にスキルディレクトリへ自動インストールされる（npm ci）
 
 > `<SKILL_DIR>` = このスキルが読み込まれた際に表示される `Base directory for this skill:` のパス。以降の手順でも同様に使用すること。
 
 ## 実行手順
 
-### Step 1: 変更されたCSS/SCSS/SASSファイルを検出する
+### Step 1: @svjunic/css-cascade をスキルディレクトリにインストールする（初回のみ）
+
+```bash
+if [ ! -d "<SKILL_DIR>/node_modules/@svjunic" ]; then
+  echo "@svjunic/css-cascade をインストールしています（初回のみ）..."
+  npm ci --prefix <SKILL_DIR>
+fi
+```
+
+`<SKILL_DIR>/node_modules/@svjunic` が存在しない場合は `npm ci` でインストールしてから Step 2 へ進む。`node_modules` が存在する場合はスキップする。
+
+### Step 2: 変更されたCSSファイルを検出する
 
 ```bash
 git diff --name-only HEAD -- '*.css'
@@ -33,30 +40,35 @@ git diff --name-only HEAD -- '*.css'
 
 変更ファイルが0件の場合は「検証対象なし（未コミットのCSS変更がありません）」と報告して終了。
 
-> 変更ファイルが1件以上あった場合は、必ず Step 2 のスクリプトを実行すること。
+> 変更ファイルが1件以上あった場合は、必ず Step 3 のスクリプトを実行すること。
 > git diff のテキスト差分だけで変更内容を判断しないこと。
 
-### Step 2: HTMLレポートを生成し、意味的差分を取得する
+### Step 3: HTMLレポートを生成し、意味的差分を取得する
 
-#### Step 2a: 各ファイルのHTMLレポートを生成する
+#### Step 3a: 各ファイルのHTMLレポートを生成する
 
 変更された各ファイルを個別に比較し、HTMLレポートを `css-cascade-report/` に出力する。
 セレクタ順序の変更も検出するため `--order-risk` を常に付与する。
 
 ```bash
 mkdir -p css-cascade-report
+WORK_DIR=$(mktemp -d)
 
 for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
-  git show HEAD:${filepath} > /tmp/css-cascade-old-one.css 2>/dev/null || > /tmp/css-cascade-old-one.css
+  SLUG=$(echo "$filepath" | tr '/' '-')
+  OLD="$WORK_DIR/old-${SLUG}.css"
+  git show HEAD:${filepath} > "$OLD" 2>/dev/null || > "$OLD"
   OUTPUT_HTML="css-cascade-report/$(echo "$filepath" | sed 's|/|--|g').html"
   node <SKILL_DIR>/node_modules/.bin/css-cascade \
-    /tmp/css-cascade-old-one.css ${filepath} \
+    "$OLD" ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
   echo "HTMLレポート: $OUTPUT_HTML"
 done
+
+rm -rf "$WORK_DIR"
 ```
 
-#### Step 2b: 各ファイルを並列で比較してClaudeが読むための意味的差分を取得する
+#### Step 3b: 各ファイルを並列で比較してClaudeが読むための意味的差分を取得する
 
 各ファイルを並列処理し、終了後にソート順で結合して出力する。
 
@@ -92,13 +104,13 @@ exit $OVERALL_EXIT
 
 終了コードの意味（`OVERALL_EXIT` = 全ファイル中の最大値）：
 
-- `0` → 差分なし（全ファイル）
-- `1` → 差分あり（いずれか1ファイル以上）
+- `0` → 差分なし・順序変更リスクなし（全ファイル）
+- `1` → 差分あり、または順序変更リスクあり（いずれか1ファイル以上）
 - `2` → エラー（ファイル読み込み失敗・CSSパースエラー）
 
-### Step 3: 結果を解釈・報告する
+### Step 4: 結果を解釈・報告する
 
-Step 2b の出力は `=== filepath ===` セパレータで区切られたファイルごとの JSON ブロックになっている。各ファイルの `summary` と `contexts` を読み取り、ファイルごとに報告する。
+Step 3b の出力は `=== filepath ===` セパレータで区切られたファイルごとの JSON ブロックになっている。各ファイルの `summary` と `contexts` を読み取り、ファイルごとに報告する。
 **HTMLレポートのパスを必ず表示すること。**
 
 **大量変更時（ファイル全体で `changed + added + removed` 合計が 50 件超）:** `summary` のみ報告し、「変更件数が多いため詳細はHTMLレポートを参照してください」と案内する。
@@ -156,4 +168,4 @@ HTMLレポートで詳細を確認してください:
 | ------------------------------------ | ------------------------ | ------------------------------------------------ |
 | `Exit code 2`                        | CSSパースエラー          | ファイルの構文エラーを確認                       |
 | `@svjunic/css-cascade が見つかりません` | パッケージ未インストール | `npm install @svjunic/css-cascade` を実行           |
-| git showがエラー                     | 新規追加ファイル         | 空ファイルを旧バージョンとして使用（Step 2参照） |
+| git showがエラー                     | 新規追加ファイル         | 空ファイルを旧バージョンとして使用（Step 3参照） |
