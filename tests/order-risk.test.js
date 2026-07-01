@@ -45,7 +45,8 @@ describe('computeSpecificity', () => {
     expect(computeSpecificity(':not(:is(.a, .b))')).toEqual([0, 1, 0])
   })
   it(':not() 内の括弧ありセレクタ (:nth-child()) でカンマを誤分割しない', () => {
-    expect(computeSpecificity(':not(:nth-child(2n of .a, .b))')).toEqual([0, 1, 0])
+    // :nth-child 自体の b=1 + of S 部分の max(.a,.b)=1 → 合計 [0,2,0] が仕様に準拠
+    expect(computeSpecificity(':not(:nth-child(2n of .a, .b))')).toEqual([0, 2, 0])
   })
 
   it(':is() は引数の最大詳細度を引き継ぐ (CSS L4)', () => {

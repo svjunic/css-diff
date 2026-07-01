@@ -28,6 +28,16 @@ function splitTopLevelCommas(str) {
   return parts
 }
 
+function findMatchingParen(s, start) {
+  let depth = 1, i = start
+  while (i < s.length && depth > 0) {
+    if (s[i] === '(') depth++
+    else if (s[i] === ')') depth--
+    i++
+  }
+  return depth === 0 ? i : null
+}
+
 /**
  * セレクタの詳細度を [a, b, c] タプルで返す。
  * ネストした :not() 等の内側の詳細度は簡略化して扱う。
@@ -53,22 +63,18 @@ export function computeSpecificity(selector) {
     let m
     while ((m = PSEUDO_RE.exec(s)) !== null) {
       const innerStart = m.index + m[0].length
-      let depth = 1, i = innerStart
-      while (i < s.length && depth > 0) {
-        if (s[i] === '(') depth++
-        else if (s[i] === ')') depth--
-        i++
-      }
-      if (depth !== 0) {
-        // 括弧未閉の不正疑似クラス: kept/pos を更新せずそのまま break し、
-        // s.slice(pos) に残ったテキストをフォールバック正規表現に委ねる
+      const end = findMatchingParen(s, innerStart)
+      if (end === null) {
+        // 括弧未閉: マッチ前テキストを kept に保存し内側セレクタを破棄して break
+        kept += s.slice(pos, m.index)
+        pos = s.length
         break
       }
       kept += s.slice(pos, m.index)
-      pos = i
+      pos = end
       PSEUDO_RE.lastIndex = pos
       if (m.groups.name.toLowerCase() !== 'where') {
-        const inner = s.slice(innerStart, i - 1).trim()
+        const inner = s.slice(innerStart, end - 1).trim()
         const args = splitTopLevelCommas(inner)
         let maxSpec = [0, 0, 0]
         for (const arg of args) {
@@ -90,15 +96,10 @@ export function computeSpecificity(selector) {
     let m2
     while ((m2 = NTH_RE.exec(s)) !== null) {
       const innerStart = m2.index + m2[0].length
-      let depth = 1, i = innerStart
-      while (i < s.length && depth > 0) {
-        if (s[i] === '(') depth++
-        else if (s[i] === ')') depth--
-        i++
-      }
+      const end = findMatchingParen(s, innerStart)
       kept2 += s.slice(pos2, m2.index)
-      if (depth === 0) {
-        const arg = s.slice(innerStart, i - 1)
+      if (end !== null) {
+        const arg = s.slice(innerStart, end - 1)
         const ofIdx = arg.search(/\bof\b/i)
         if (ofIdx !== -1) {
           const selectorList = arg.slice(ofIdx + 2).trim()
@@ -106,12 +107,12 @@ export function computeSpecificity(selector) {
           const maxSpec = specs.reduce((max, spec) => isHigherSpec(spec, max) ? spec : max, [0, 0, 0])
           a += maxSpec[0]; b += maxSpec[1]; c += maxSpec[2]
         }
-        pos2 = i
+        pos2 = end
+        b++
       } else {
         pos2 = s.length
       }
       NTH_RE.lastIndex = pos2
-      b++
     }
     s = kept2 + s.slice(pos2)
   }
