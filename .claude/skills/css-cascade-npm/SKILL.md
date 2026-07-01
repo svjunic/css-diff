@@ -62,7 +62,7 @@ for filepath in $(git diff --name-only HEAD -- '*.css' | sort); do
   node <SKILL_DIR>/node_modules/.bin/css-cascade \
     "$OLD" ${filepath} \
     --format html --order-risk > "$OUTPUT_HTML" 2>&1 || true
-  echo "HTMLレポート: $OUTPUT_HTML"
+  echo "HTMLレポート: file://$(pwd)/$OUTPUT_HTML"
 done
 
 rm -rf "$WORK_DIR"
@@ -113,6 +113,47 @@ exit $OVERALL_EXIT
 Step 3b の出力は `=== filepath ===` セパレータで区切られたファイルごとの JSON ブロックになっている。各ファイルの `summary` と `contexts` を読み取り、ファイルごとに報告する。
 **HTMLレポートのパスを必ず表示すること。**
 
+**JSON 出力の構造（Step 3b の各ブロックの形式）：**
+
+```json
+{
+  "version": 1,
+  "summary": { "changed": 2, "added": 1, "removed": 0, "unchanged": 14 },
+  "contexts": [
+    {
+      "key": "@media screen",
+      "status": "changed",
+      "changeCount": 3,
+      "selectors": [
+        {
+          "selector": ".foo .bar",
+          "status": "changed",
+          "changeCount": 2,
+          "props": [
+            { "prop": "color",   "status": "changed",  "oldValue": "red",  "newValue": "blue" },
+            { "prop": "display", "status": "added",                         "newValue": "flex" },
+            { "prop": "margin",  "status": "removed",  "oldValue": "8px"                      }
+          ]
+        }
+      ]
+    }
+  ],
+  "orderRisks": [
+    {
+      "hasWarning": true,
+      "conflictingProps": ["color", "background"]
+    }
+  ]
+}
+```
+
+フィールドの意味：
+- `contexts[].key`: コンテキスト識別子（`@media screen` / `root` など）
+- `contexts[].selectors[].props[].status`: `"changed"` / `"added"` / `"removed"` のいずれか
+- `props[].oldValue`: 変更前の値（`status` が `changed` または `removed` の場合のみ存在）
+- `props[].newValue`: 変更後の値（`status` が `changed` または `added` の場合のみ存在）
+- `orderRisks[].conflictingProps`: 順序変更によってカスケード競合が起きるプロパティ名の配列
+
 **大量変更時（ファイル全体で `changed + added + removed` 合計が 50 件超）:** `summary` のみ報告し、「変更件数が多いため詳細はHTMLレポートを参照してください」と案内する。
 
 **変更の確認ポイント：**
@@ -142,6 +183,39 @@ HTMLレポートで詳細を確認してください:
 - プロパティ変更あり → 変更内容が「意図した変更の直接的な結果」か「副作用」かを区別して報告。HTMLレポートも案内する
 - プロパティ変更ゼロ・順序変更あり → `⚠️ **順序変更が検出されました**` と警告し、HTMLレポートへ誘導する
 - 差分なし（exit code 0）かつ順序変更なし → 問題なしと報告
+
+**出力フォーマット：**
+
+全ファイルの結果をサマリーテーブルにまとめ、⚠️ のファイルのみ変更詳細を展開する。
+
+```markdown
+| 判定 | ファイル | changed | added | removed | 順序変更 | その他 | レポート |
+|------|---------|---------|-------|---------|---------|--------|---------|
+| ✅ | common.css | 0 | 0 | 0 | なし | | - |
+| ⚠️ | main.css | 2 | 1 | 0 | あり (color, bg) | | [main--css.html](file:///abs/path/css-cascade-report/main--css.html) |
+| ❌ | broken.css | - | - | - | - | CSSパースエラー | - |
+```
+
+列の定義：
+- **判定**: `✅`（問題なし）/ `⚠️`（変更あり または 順序変更あり）/ `❌`（エラー）
+- **順序変更**: `orderRisks` に `hasWarning: true` があれば「あり」＋`conflictingProps` を併記
+- **その他**: エラーメッセージ、標準外プロパティの警告など
+- **レポート**: Step 3a が出力した `file://` URL を `[filename](url)` 形式の markdown リンクにして記載。Claude Code UI でクリックするとブラウザで開ける。エラー時は `-`
+
+⚠️ のファイルがある場合、テーブルの後に変更詳細を展開する：
+
+```markdown
+#### main.css の変更詳細
+- `@media screen` › `.foo .bar`
+  - `color`: `red` → `blue`
+  - `display`: （追加）`flex`
+```
+
+大量変更時（50 件超）はテーブルのサマリーのみ掲載し、詳細はレポートへ誘導する。
+
+**posttooluse.js との連携：**
+
+ファイル保存時に `posttooluse.js` が自動実行され、1 行サマリー（`[css-cascade] filename: N 変更, 順序変更リスク M 件`）を出力する。これは変更の警告通知であり、詳細報告（Step 4 の全項目）は `/css-cascade-npm` スキルを明示的に呼び出した際に行う。
 
 **プロパティ名の検証：**
 
